@@ -113,6 +113,7 @@ window.BlazorBarcodeScanner = {
                     });
             }
             if (err && (err instanceof ZXing.NotFoundException)) {
+                this.lastPictureDecoded = undefined;
                 DotNet.invokeMethodAsync('BlazorBarcodeScanner.ZXing.JS', 'ReceiveNotFound');
             }
         });
