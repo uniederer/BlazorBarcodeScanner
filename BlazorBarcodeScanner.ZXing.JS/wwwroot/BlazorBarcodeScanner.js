@@ -75,6 +75,7 @@ window.BlazorBarcodeScanner = {
     lastPicture: undefined,
     lastPictureDecoded: undefined,
     lastPictureDecodedFormat: undefined,
+    lastSnapDuration: undefined,
     getVideoConstraints: function () {
         var videoConstraints = {};
 
@@ -157,18 +158,34 @@ window.BlazorBarcodeScanner = {
         }
 
         var capture = new ImageCapture(this.codeReader.stream.getVideoTracks()[0]);
+        var start = Date.now();
+        var me = this;
 
-        await capture.grabFrame()
-            .then(bitmap => {
-                var context = canvas.getContext('2d');
-
-                canvas.width = bitmap.width;
-                canvas.height = bitmap.height;
-
-                context.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height);
-
-                this.lastPicture = canvas.toDataURL(type);
+        console.log(Date.now() - start + ": snap");
+        await capture.takePhoto({ "imageHeight": 3072, "imageWdith": 4096, "fillLightMode": "auto",  })
+            .then(async function (blob) {
+                console.log(Date.now() - start + ": taken");
+                me.lastPicture = await new Promise((resolve) => {
+                    var reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    console.log(Date.now() - start + ": load");
+                    reader.readAsDataURL(blob);
+                    console.log(Date.now() - start + ": encoded");
+                    document.getElementById("ne-debug-snap").innerHTML = (Date.now() - start) + "ms";
+                });
             });
+         console.log(Date.now() - start + ": Captured");
+        //await capture.grabFrame()
+        //    .then(bitmap => {
+        //        var context = canvas.getContext('2d');
+
+        //        canvas.width = bitmap.width;
+        //        canvas.height = bitmap.height;
+
+        //        context.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height);
+
+        //        this.lastPicture = canvas.toDataURL(type, 1);
+        //    });
     },
     pictureGetBase64Unmarshalled: function (source) {
         var source_str = BINDING.conv_string(source);
