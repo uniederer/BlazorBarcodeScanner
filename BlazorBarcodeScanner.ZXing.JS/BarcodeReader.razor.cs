@@ -110,21 +110,21 @@ namespace BlazorBarcodeScanner.ZXing.JS
             await base.OnInitializedAsync();
 
             _backend = new BarcodeReaderInterop(JSRuntime);
-            _backend.SetLastDecodedPictureFormat(DecodedPictureCapture ? "image/jpeg" : null);
+            await _backend.SetLastDecodedPictureFormat(DecodedPictureCapture ? "image/jpeg" : null);
 
             await GetVideoInputDevicesAsync();
 
             BarcodeReaderInterop.BarcodeReceived += ReceivedBarcodeText;
             if (StartCameraAutomatically && _videoInputDevices.Count > 0)
             {
-                _backend.SetVideoInputDevice(SelectedVideoInputId);
-                StartDecoding();
+                await _backend.SetVideoInputDevice(SelectedVideoInputId);
+                await StartDecoding();
             }
         }
         
-        public void Dispose()
+        public async void Dispose()
         {
-            StopDecoding();
+            await StopDecoding();
         }
 
         private async Task GetVideoInputDevicesAsync()
@@ -132,17 +132,17 @@ namespace BlazorBarcodeScanner.ZXing.JS
             _videoInputDevices = await _backend.GetVideoInputDevices("get");
         }
 
-        private void RestartDecoding()
+        private async Task RestartDecoding()
         {
-            StopDecoding();
-            StartDecoding();
+            await StopDecoding();
+            await StartDecoding();
         }
 
-        public async void StartDecoding()
+        public async Task StartDecoding()
         {
             var width = StreamWidth ?? 0;
             var height = StreamHeight ?? 0;
-            _backend.StartDecoding(_video, width, height);
+            await _backend.StartDecoding(_video, width, height);
             SelectedVideoInputId = await _backend.GetVideoInputDevice();
             IsDecoding = true;
             StateHasChanged();
@@ -158,37 +158,37 @@ namespace BlazorBarcodeScanner.ZXing.JS
             return await _backend.GetLastDecodedPicture();
         }
 
-        public void StopDecoding()
+        public async Task StopDecoding()
         {
             BarcodeReaderInterop.OnBarcodeReceived(string.Empty);
-            _backend.StopDecoding();
+            await _backend.StopDecoding();
             IsDecoding = false;
             StateHasChanged();
         }
 
-        public void UpdateResolution()
+        public async Task UpdateResolution()
         {
-            RestartDecoding();
+            await RestartDecoding();
         }
 
-        public void ToggleTorch()
+        public async Task ToggleTorch()
         {
-            _backend.ToggleTorch();
+            await _backend.ToggleTorch();
         }
 
-        public void TorchOn()
+        public async Task TorchOn()
         {
-            _backend.SetTorchOn();
+            await _backend.SetTorchOn();
         }
 
-        public void TorchOff()
+        public async Task TorchOff()
         {
-            _backend.SetTorchOff();
+            await _backend.SetTorchOff();
         }
 
-        public void SelectVideoInput(VideoInputDevice device)
+        public async Task SelectVideoInput(VideoInputDevice device)
         {
-            ChangeVideoInputSource(device.DeviceId);
+            await ChangeVideoInputSource(device.DeviceId);
         }
 
         private async void ReceivedBarcodeText(BarcodeReceivedEventArgs args)
@@ -198,15 +198,15 @@ namespace BlazorBarcodeScanner.ZXing.JS
             StateHasChanged();
         }
 
-        protected void ChangeVideoInputSource(string deviceId)
+        protected async Task ChangeVideoInputSource(string deviceId)
         {
-            _backend.SetVideoInputDevice(deviceId);
-            RestartDecoding();
+            await _backend.SetVideoInputDevice(deviceId);
+            await RestartDecoding();
         }
 
-        protected void OnVideoInputSourceChanged(ChangeEventArgs args)
+        protected async Task OnVideoInputSourceChanged(ChangeEventArgs args)
         {
-            ChangeVideoInputSource(args.Value.ToString());
+            await ChangeVideoInputSource(args.Value.ToString());
         }
     }
 }
