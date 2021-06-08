@@ -171,7 +171,7 @@ window.BlazorBarcodeScanner = {
                     console.log(Date.now() - start + ": load");
                     reader.readAsDataURL(blob);
                     console.log(Date.now() - start + ": encoded");
-                    document.getElementById("ne-debug-snap").innerHTML = (Date.now() - start) + "ms";
+                    // document.getElementById("ne-debug-snap").innerHTML = (Date.now() - start) + "ms";
                 });
             });
          console.log(Date.now() - start + ": Captured");
