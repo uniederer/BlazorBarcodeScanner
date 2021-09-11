@@ -1,62 +1,63 @@
 console.log("Init BlazorBarcodeScanner");
-async function mediaStreamSetTorch(track, onOff) {
-    await track.applyConstraints({
-        advanced: [{
-            fillLightMode: onOff ? 'flash' : 'off',
-            torch: onOff ? true : false,
-        }],
-    });
-}
-
-  /**
-   * Checks if the stream has torch support.
-   */
-function mediaStreamIsTorchCompatible(stream) {
-
-    const tracks = stream.getVideoTracks();
-
-    for (const track of tracks) {
-        if (mediaStreamIsTorchCompatibleTrack(track)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-/**
- * Checks if the stream has torch support and return track has torch capability.
- */
-function mediaStreamGetTorchCompatibleTrack(stream) {
-
-    const tracks = stream.getVideoTracks();
-
-    for (const track of tracks) {
-        if (mediaStreamIsTorchCompatibleTrack(track)) {
-            return track;
-        }
-    }
-
-    return null;
-}
-
-  /**
-   *
-   * @param track The media stream track that will be checked for compatibility.
-   */
-  function mediaStreamIsTorchCompatibleTrack(track) {
-    try {
-        const capabilities = track.getCapabilities();
-        return 'torch' in capabilities;
-    } catch (err) {
-        // some browsers may not be compatible with ImageCapture
-        // so we are ignoring this for now.
-        console.error(err);
-        console.warn('Your browser may be not fully compatible with WebRTC and/or ImageCapture specs. Torch will not be available.');
-        return false;
-    }
-}
 window.BlazorBarcodeScanner = {
+    mediaStreamSetTorch: async function (track, onOff) {
+        await track.applyConstraints({
+            advanced: [{
+                fillLightMode: onOff ? 'flash' : 'off',
+                torch: onOff ? true : false,
+            }],
+        });
+    }, 
+
+    /**
+    * Checks if the stream has torch support.
+    */
+    mediaStreamIsTorchCompatible: function (stream) {
+
+        const tracks = stream.getVideoTracks();
+
+        for (const track of tracks) {
+            if (this.mediaStreamIsTorchCompatibleTrack(track)) {
+                return true;
+            }
+        }
+
+        return false;
+    },
+
+    /**
+     * Checks if the stream has torch support and return track has torch capability.
+     */
+    mediaStreamGetTorchCompatibleTrack: function (stream) {
+
+        const tracks = stream.getVideoTracks();
+
+        for (const track of tracks) {
+            if (this.mediaStreamIsTorchCompatibleTrack(track)) {
+                return track;
+            }
+        }
+
+        return null;
+    },
+
+    /**
+    *
+    * @param track The media stream track that will be checked for compatibility.
+    */
+    mediaStreamIsTorchCompatibleTrack: function (track) {
+        try {
+            const capabilities = track.getCapabilities();
+            return 'torch' in capabilities;
+        } catch (err) {
+            // some browsers may not be compatible with ImageCapture
+            // so we are ignoring this for now.
+            console.error(err);
+            console.warn('Your browser may be not fully compatible with WebRTC and/or ImageCapture specs. Torch will not be available.');
+            return false;
+        }
+    },
+
     codeReader: new ZXing.BrowserMultiFormatReader(),
     listVideoInputDevices: async function () { return await this.codeReader.listVideoInputDevices(); },
     selectedDeviceId: undefined,
@@ -133,20 +134,20 @@ window.BlazorBarcodeScanner = {
         console.log('Reset camera stream.');
     },
     setTorchOn: function () {
-        if (mediaStreamIsTorchCompatible(this.codeReader.stream)) {
-            mediaStreamSetTorch(this.codeReader.stream.getVideoTracks()[0], true);
+        if (this.mediaStreamIsTorchCompatible(this.codeReader.stream)) {
+            this.mediaStreamSetTorch(this.codeReader.stream.getVideoTracks()[0], true);
         }
     },
     setTorchOff() {
-        if (mediaStreamIsTorchCompatible(this.codeReader.stream)) {
-            mediaStreamSetTorch(this.codeReader.stream.getVideoTracks()[0], false);
+        if (this.mediaStreamIsTorchCompatible(this.codeReader.stream)) {
+            this.mediaStreamSetTorch(this.codeReader.stream.getVideoTracks()[0], false);
         }
     },
     toggleTorch() {
-        let track = mediaStreamGetTorchCompatibleTrack(this.codeReader.stream);
+        let track = this.mediaStreamGetTorchCompatibleTrack(this.codeReader.stream);
         if (track !== null) {
             let torchStatus = !track.getSettings().torch;
-            mediaStreamSetTorch(track, torchStatus);
+            this.mediaStreamSetTorch(track, torchStatus);
         }
     },
     capture: async function (type, canvas) {
