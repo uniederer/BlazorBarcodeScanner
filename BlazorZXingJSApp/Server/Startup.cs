@@ -6,6 +6,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Linq;
+using Microsoft.AspNetCore.StaticFiles;
+using System.IO;
+using Microsoft.Extensions.FileProviders;
 
 namespace BlazorZXingJSApp.Server
 {
@@ -45,6 +48,15 @@ namespace BlazorZXingJSApp.Server
             app.UseHttpsRedirection();
             app.UseBlazorFrameworkFiles();
             app.UseStaticFiles();
+
+            var provider = new FileExtensionContentTypeProvider();
+            // Add new mappings
+            provider.Mappings[".wasm"] = "application/wasm";
+
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                ContentTypeProvider = provider
+            });
 
             app.UseRouting();
 
