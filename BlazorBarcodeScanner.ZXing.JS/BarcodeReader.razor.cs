@@ -115,13 +115,14 @@ namespace BlazorBarcodeScanner.ZXing.JS
             await GetVideoInputDevicesAsync();
 
             BarcodeReaderInterop.BarcodeReceived += ReceivedBarcodeText;
+            BarcodeReaderInterop.BarcodeNotFound += ReceivedBarcodeNotFound;
             if (StartCameraAutomatically && _videoInputDevices.Count > 0)
             {
                 _backend.SetVideoInputDevice(SelectedVideoInputId);
                 StartDecoding();
             }
         }
-        
+
         public void Dispose()
         {
             StopDecoding();
@@ -160,7 +161,7 @@ namespace BlazorBarcodeScanner.ZXing.JS
 
         public void StopDecoding()
         {
-            BarcodeReaderInterop.OnBarcodeReceived(string.Empty);
+            BarcodeReaderInterop.OnNotFoundReceived();
             _backend.StopDecoding();
             IsDecoding = false;
             StateHasChanged();
@@ -195,6 +196,12 @@ namespace BlazorBarcodeScanner.ZXing.JS
         {
             BarcodeText = args.BarcodeText;
             await OnBarcodeReceived.InvokeAsync(args);
+            StateHasChanged();
+        }
+
+        private void ReceivedBarcodeNotFound()
+        {
+            BarcodeText = string.Empty;
             StateHasChanged();
         }
 
