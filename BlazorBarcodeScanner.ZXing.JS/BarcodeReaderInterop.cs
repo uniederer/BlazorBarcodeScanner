@@ -145,21 +145,21 @@ namespace BlazorBarcodeScanner.ZXing.JS
 #endif 
 
         private static string lastCode = string.Empty;
-        public static void OnBarcodeReceived(string barcodeText)
+        public static void OnBarcodeReceived(ScanResult result)
         {
-            if (string.IsNullOrEmpty(barcodeText))
+            if (string.IsNullOrEmpty(result.Content))
             {
                 return;
             }
             /* Debounce code */
-            if (barcodeText == lastCode)
+            if (result.Content == lastCode)
             {
                 return;
             }
-            lastCode = barcodeText;
+            lastCode = result.Content;
             BarcodeReceivedEventArgs args = new BarcodeReceivedEventArgs()
             {
-                BarcodeText = barcodeText,
+                BarcodeText = result.Content,
                 TimeReceived = DateTime.Now,
             };
 
@@ -181,7 +181,8 @@ namespace BlazorBarcodeScanner.ZXing.JS
 
     public class BarcodeReceivedEventArgs : EventArgs
     {
-        public string BarcodeText { get; set; }
+        public string BarcodeType { get; set; } = string.Empty;
+        public string BarcodeText { get; set; } = string.Empty;
         public DateTime TimeReceived { get; set; } = new DateTime();
     }
 

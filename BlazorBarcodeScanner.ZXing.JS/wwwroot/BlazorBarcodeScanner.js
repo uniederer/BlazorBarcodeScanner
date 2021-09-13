@@ -7,6 +7,22 @@ window.BlazorBarcodeScanner = {
     captureCanvas: undefined,
     stream: undefined,
 
+    decodedCodesCount: 0,
+
+    selectedDeviceId: undefined,
+    setSelectedDeviceId: function (deviceId) {
+        this.selectedDeviceId = deviceId;
+    },
+    getSelectedDeviceId: function () {
+        return this.selectedDeviceId;
+    },
+    streamWidth: 640,
+    streamHeight: 480,
+    setVideoResolution: function (width, height) {
+        this.streamWidth = width;
+        this.streamHeight = height;
+    },
+
     init: function (scanner) {
         console.log("Init BlazorBarcodeScanner");
         this.zbar = scanner;
@@ -18,9 +34,11 @@ window.BlazorBarcodeScanner = {
     },
     decode: function (me) {
         try {
-            const start = Date.now();
+//            const start = Date.now();
             const width = me.captureCanvas.width;
             const height = me.captureCanvas.height;
+
+            me.decodedCodesCount = 0;
 
             if (!(width && height)) {
                 return;
@@ -28,24 +46,47 @@ window.BlazorBarcodeScanner = {
 
             me.captureContext.drawImage(me.video, 0, 0, width, height);
             const image = me.captureContext.getImageData(0, 0, width, height);
-            console.log("Capture done at " + (Date.now() - start) + "ms");
+//            console.log("Capture done at " + (Date.now() - start) + "ms");
             const d = image.data;
             const grayData = new Array(d.length / 4);
             for (var i = 0, j = 0; i < d.length; i += 4, j++) {
                 grayData[j] = (d[i] * 66 + d[i + 1] * 129 + d[i + 2] * 25 + 4096) >> 8;
             }
 
-            console.log("Graying done at " + (Date.now() - start) + "ms");
+//            console.log("Graying done at " + (Date.now() - start) + "ms");
             const p = me.api.create_buffer(width, height);
             me.zbar.HEAP8.set(grayData, p);
             me.api.scan_image(p, width, height)
             me.api.destroy_buffer(p);
-            console.log("Frame done at " + (Date.now() - start) + "ms");
+//            console.log("Scan done at " + (Date.now() - start) + "ms");
+
+            if (me.lastPictureDecodedFormat) {
+                me.lastPictureDecoded = me.captureCanvas.toDataURL(this.lastPictureDecodedFormat);
+            }
+//            console.log("Frame done at " + (Date.now() - start) + "ms");
+
+            if (me.decodedCodesCount != 0) {
+            }
+            else {
+                me.notifyNotFound();
+            }
         }
         catch (err) {
+            me.notifyError(err);
             console.error(err);
             me.stopDecoding();
         }
+    },
+    notifyFound: function (scanResult) {
+        DotNet.invokeMethodAsync('BlazorBarcodeScanner.ZXing.JS', 'ReceiveBarcode', scanResult);
+    },
+    notifyNotFound: function () {
+        this.lastPictureDecoded = undefined;
+        DotNet.invokeMethodAsync('BlazorBarcodeScanner.ZXing.JS', 'ReceiveNotFound');
+    },
+    notifyError: async function (err) {
+        var message = await DotNet.invokeMethodAsync('BlazorBarcodeScanner.ZXing.JS', 'ReceiveError', err);
+        console.log(message);
     },
     mediaStreamSetTorch: async function (track, onOff) {
         await track.applyConstraints({
@@ -104,8 +145,6 @@ window.BlazorBarcodeScanner = {
             return false;
         }
     },
-
-    codeReader: new ZXing.BrowserMultiFormatReader(),
     listVideoInputDevices: async function () {
         const devices = await navigator.mediaDevices.enumerateDevices();
 
@@ -113,19 +152,6 @@ window.BlazorBarcodeScanner = {
             const kind = info.kind === 'video' ? 'videoinput' : info.kind;
             return kind === 'videoinput';
         });
-    },
-    selectedDeviceId: undefined,
-    setSelectedDeviceId: function (deviceId) {
-        this.selectedDeviceId = deviceId;
-    },
-    getSelectedDeviceId: function () {
-        return this.selectedDeviceId;
-    },
-    streamWidth: 640,
-    streamHeight: 480,
-    setVideoResolution: function (width, height) {
-        this.streamWidth = width;
-        this.streamHeight = height;
     },
     lastPicture: undefined,
     lastPictureDecoded: undefined,
@@ -149,64 +175,23 @@ window.BlazorBarcodeScanner = {
         var videoConstraints = this.getVideoConstraints();
         var stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints });
         var track = stream.getTracks()[0];
+        var trackSettings = track.getSettings();
 
         this.video = video;
         this.stream = stream;
-        this.startVideo(video, stream);
-
 
         console.log("Starting decoding with " + videoConstraints);
-        if (this.captureCanvas) {
-        }
-        this.captureCanvas = document.createElement('canvas');
-        this.captureCanvas.width = this.streamWidth; //track.width;
-        this.captureCanvas.height = this.streamHeight; //track.height;
-        this.captureContext = this.captureCanvas.getContext('2d');
+        await this.startVideo(video, stream)
+        console.log("Video playback started with a resolution of " + trackSettings.width + "/" + trackSettings.height);
 
-        this.zbar['processResult'] = (symbol, data, polygon) => {
-            console.log(Date.now());
-            console.log(symbol);
-            console.log(data);
-            console.log(polygon);
-            DotNet.invokeMethodAsync('BlazorBarcodeScanner.ZXing.JS', 'ReceiveBarcode', data)
-                .then(message => {
-                    console.log(message);
-                });
-        };
-
-        //await this.codeReader.decodeFromConstraints({ video: videoConstraints }, video, (result, err) => {
-        //    if (result) {
-        //        if (this.lastPictureDecodedFormat) {
-        //            this.lastPictureDecoded = this.codeReader.captureCanvas.toDataURL(this.lastPictureDecodedFormat);
-        //        }
-        //        DotNet.invokeMethodAsync('BlazorBarcodeScanner.ZXing.JS', 'ReceiveBarcode', result.text)
-        //            .then(message => {
-        //                console.log(message);
-        //            });
-        //    }
-        //    if (err && !(err instanceof ZXing.NotFoundException)) {
-        //        DotNet.invokeMethodAsync('BlazorBarcodeScanner.ZXing.JS', 'ReceiveError', err)
-        //            .then(message => {
-        //                console.log(message);
-        //            });
-        //    }
-        //    if (err && (err instanceof ZXing.NotFoundException)) {
-        //        this.lastPictureDecoded = undefined;
-        //        DotNet.invokeMethodAsync('BlazorBarcodeScanner.ZXing.JS', 'ReceiveNotFound');
-        //    }
-        //});
+        this.setupScanner(trackSettings);
 
         // Make sure the actual selectedDeviceId is logged after start decoding.
         this.selectedDeviceId = stream.getVideoTracks()[0].getCapabilities()["deviceId"];
 
-        if (this.captureCanvas) {
-            this.tick = setInterval(this.decode, 250, this);
-        }
+        this.tick = setInterval(this.decode, 200, this);
 
-      /*  this.codeReader.stream.getVideoTracks()[0].applyConstraints({
-            advanced: [{ torch: true }] // or false to turn off the torch
-        }); */
-        console.log(`Started continous decode from camera with id ${this.selectedDeviceId}`);
+        console.log(`Continously decoding from camera with id ${this.selectedDeviceId}`);
     },
     startVideo: function (videoElement, stream) {
         // Attach video stream to video element 
@@ -224,11 +209,25 @@ window.BlazorBarcodeScanner = {
         videoElement.setAttribute('muted', 'true');
         videoElement.setAttribute('playsinline', 'true');
 
-        this.video.play();
+        return this.video.play();
+    },
+    setupScanner: function (trackSettings) {
+        this.captureCanvas = document.createElement('canvas');
+        this.captureCanvas.width = trackSettings.width;
+        this.captureCanvas.height = trackSettings.height;
+        this.captureContext = this.captureCanvas.getContext('2d');
+
+        this.zbar['processResult'] = (type, data, polygon) => {
+            this.decodedCodesCount++;
+//            console.log(type);
+//            console.log(data);
+//            console.log(polygon);
+            this.notifyFound({ Type: type, Content: data });
+        };
     },
     stopDecoding: function () {
         clearInterval(this.tick);
-        DotNet.invokeMethodAsync('BlazorBarcodeScanner.ZXing.JS', 'ReceiveBarcode', '')
+        DotNet.invokeMethodAsync('BlazorBarcodeScanner', 'ReceiveBarcode', '')
             .then(message => {
                 console.log(message);
             });
@@ -256,11 +255,11 @@ window.BlazorBarcodeScanner = {
     capture: async function (type, canvas) {
         this.lastPicture = "";
 
-        if (!this.codeReader.stream) {
+        if (!this.stream) {
             return "";
         }
 
-        var capture = new ImageCapture(this.codeReader.stream.getVideoTracks()[0]);
+        var capture = new ImageCapture(this.stream.getVideoTracks()[0]);
 
         await capture.grabFrame()
             .then(bitmap => {

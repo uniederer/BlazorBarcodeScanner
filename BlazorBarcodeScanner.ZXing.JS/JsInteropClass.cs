@@ -4,16 +4,17 @@ using System.Linq;
 
 namespace BlazorBarcodeScanner.ZXing.JS
 {
+    /// <summary>
+    /// Unfortunately JS is unable to invoke public methods of internal classes. Thus 
+    /// we route the call to the internal class at this point.This allows us to hide away
+    /// the rest of the interop from the component's client. 
+    /// </summary>
     public class JsInteropClass
     {
-
         [JSInvokable]
-        public static void ReceiveBarcode(string barcodeText)
+        public static void ReceiveBarcode(ScanResult result)
         {
-            /* Unfortunately JS is unable to invoke public methods of internal classes. Thus
-             * we route the call to the internal class at this point. This allows us to hide away
-             * the rest of the interop from the component's client. */
-            BarcodeReaderInterop.OnBarcodeReceived(barcodeText);
+            BarcodeReaderInterop.OnBarcodeReceived(result);
         }
 
         [JSInvokable]
