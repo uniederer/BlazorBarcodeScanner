@@ -124,6 +124,13 @@ namespace BlazorBarcodeScanner.ZXing.JS
         
         public async void Dispose()
         {
+            await Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual async Task Dispose(bool disposing)
+        {
+            BarcodeReaderInterop.BarcodeReceived -= ReceivedBarcodeText;
             await StopDecoding();
         }
 

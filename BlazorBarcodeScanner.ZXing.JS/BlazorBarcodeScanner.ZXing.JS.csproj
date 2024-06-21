@@ -1,31 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
-
   <PropertyGroup>
-	<TargetFrameworks>net5.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net8.0</TargetFrameworks>
     <Version>0.2.3</Version>
     <Authors>Sabit Igde</Authors>
-	<Company />
-	<Description>Barcode Scanner component for Blazor using zxing-js Interop</Description>
-	<RepositoryUrl>https://github.com/sabitertan/BlazorBarcodeScanner</RepositoryUrl>
-	<PackageTags>Blazor Barcode QRCode Reader Scanner</PackageTags>
-	<PackageLicenseFile></PackageLicenseFile>
-	<PackageLicenseExpression>MIT</PackageLicenseExpression>
-	<RepositoryType>git</RepositoryType>
+    <Company />
+    <Description>Barcode Scanner component for Blazor using zxing-js Interop</Description>
+    <RepositoryUrl>https://github.com/sabitertan/BlazorBarcodeScanner</RepositoryUrl>
+    <PackageTags>Blazor Barcode QRCode Reader Scanner</PackageTags>
+    <PackageLicenseFile>
+    </PackageLicenseFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryType>git</RepositoryType>
+    <AssemblyVersion>0.2.3.3</AssemblyVersion>
+    <FileVersion>0.2.3.3</FileVersion>
   </PropertyGroup>
-	<PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
-		<RazorLangVersion>3.0</RazorLangVersion>
-	</PropertyGroup>
-
-	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
-		<PackageReference Include="Microsoft.AspNetCore.Components" Version="3.1.6" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="3.1.6" />
-	</ItemGroup>
-	<ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
-		<PackageReference Include="Microsoft.AspNetCore.Components" Version="5.0.2" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="5.0.2" />
-	</ItemGroup>
-	<ItemGroup>
-		<SupportedPlatform Include="browser" />
-	</ItemGroup>
-	
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.4" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.4" />
+  </ItemGroup>
 </Project>
