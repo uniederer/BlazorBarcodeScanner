@@ -77,7 +77,7 @@ window.BlazorBarcodeScanner = {
     lastPictureDecodedFormat: undefined,
     lastSnapDuration: undefined,
     getVideoConstraints: function () {
-        let videoConstraints = {};
+        var videoConstraints = {};
 
         if (!this.selectedDeviceId) {
             videoConstraints["facingMode"] = 'environment';
@@ -91,16 +91,8 @@ window.BlazorBarcodeScanner = {
 
         return videoConstraints;
     },
-    currentVideo: undefined,
-    onOrientationChange: async function () {
-        console.log("Updating orientation");
-        await window.BlazorBarcodeScanner.stopDecoding();
-        await window.BlazorBarcodeScanner.startDecoding(window.BlazorBarcodeScanner.currentVideo);
-    },
     startDecoding: async function (video) {
-        let videoConstraints = this.getVideoConstraints();
-
-        window.addEventListener('orientationchange', this.onOrientationChange);
+        var videoConstraints = this.getVideoConstraints();
 
         console.log("Starting decoding with " + videoConstraints);
         await this.codeReader.decodeFromConstraints({ video: videoConstraints }, video, (result, err) => {
@@ -108,11 +100,16 @@ window.BlazorBarcodeScanner = {
                 if (this.lastPictureDecodedFormat) {
                     this.lastPictureDecoded = this.codeReader.captureCanvas.toDataURL(this.lastPictureDecodedFormat);
                 }
-
-                DotNet.invokeMethodAsync('BlazorBarcodeScanner.ZXing.JS', 'ReceiveBarcode', result.text);
+                DotNet.invokeMethodAsync('BlazorBarcodeScanner.ZXing.JS', 'ReceiveBarcode', result.text)
+                    .then(message => {
+                        console.log(message);
+                    });
             }
             if (err && !(err instanceof ZXing.NotFoundException)) {
-                DotNet.invokeMethodAsync('BlazorBarcodeScanner.ZXing.JS', 'ReceiveError', err);
+                DotNet.invokeMethodAsync('BlazorBarcodeScanner.ZXing.JS', 'ReceiveError', err)
+                    .then(message => {
+                        console.log(message);
+                    });
             }
             if (err && (err instanceof ZXing.NotFoundException)) {
                 this.lastPictureDecoded = undefined;
@@ -134,7 +131,6 @@ window.BlazorBarcodeScanner = {
             .then(message => {
                 console.log(message);
             });
-        window.removeEventListener('orientationchange', this.onOrientationChange);
         console.log('Reset camera stream.');
     },
     setTorchOn: function () {
@@ -161,16 +157,16 @@ window.BlazorBarcodeScanner = {
             return "";
         }
 
-        let capture = new ImageCapture(this.codeReader.stream.getVideoTracks()[0]);
-        let start = Date.now();
-        let me = this;
+        var capture = new ImageCapture(this.codeReader.stream.getVideoTracks()[0]);
+        var start = Date.now();
+        var me = this;
 
         console.log(Date.now() - start + ": snap");
         await capture.takePhoto({ "imageHeight": 3072, "imageWdith": 4096, "fillLightMode": "auto",  })
             .then(async function (blob) {
                 console.log(Date.now() - start + ": taken");
                 me.lastPicture = await new Promise((resolve) => {
-                    let reader = new FileReader();
+                    var reader = new FileReader();
                     reader.onloadend = () => resolve(reader.result);
                     console.log(Date.now() - start + ": load");
                     reader.readAsDataURL(blob);
@@ -192,11 +188,11 @@ window.BlazorBarcodeScanner = {
         //    });
     },
     pictureGetBase64Unmarshalled: function (source) {
-        let source_str = BINDING.conv_string(source);
+        var source_str = BINDING.conv_string(source);
         return BINDING.js_string_to_mono_string(this.pictureGetBase64(source_str));
     },
     pictureGetBase64: function (source) {
-        let pic = "";
+        var pic = "";
         switch (source) {
             case "capture": {
                 pic = this.lastPicture;
